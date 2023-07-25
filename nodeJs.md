@@ -55,3 +55,91 @@ o scrip fica assim no package jason
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --watch src/server.js"
   },
+
+  # rotas
+  rotas são caminhos de entrada para serem utilizados pela nossa api. ou seja quando um frontEdn for consumir nossa aplicação ele vai fazer atravez de rotas. meio de entrada e forma de usar nossa api como listar usuarios, remover usuarios, adicionar usuarios etc.
+  uma requisição http é composta dedois recursos principais.
+  o metodo http e a url
+  no backend a gente recebe essas informações atravez do req
+  podemos dar uma olhada neles usando a const 
+  const {method, URL} = req
+
+  então se a gente deixar o codigo assim e rodar ele 
+  import http from 'node:http'
+
+
+const server = http.createServer((req, res)=>{
+    const {method, url} = req
+    console.log(method, url)
+return res.end('hello world')
+})
+
+server.listen(3333)
+
+no nosso console.log de onde a gente esta rodando o npm run dev a gente vai ter o get / ou seja o metodo e o endereço. e no nosso terminal que rodarmos o http localhost:3333 teremos o hellowordl.
+
+se a gente tivesse colocardo http localhost:3333/users
+ele teria mostrado get /users
+podemos trocar tambem o metodo da requisiçõ.
+se a gente rodar isso:
+http POST localhost:3333/users
+
+o console.log de onde temos o node rodando vai nos dar isso 
+POST /users
+
+dentro  do http temos varios metodos mas os que vamos usar mais são os
+GET
+POST
+DELETE
+PATCH
+PUT
+os 5 que vamos sar sempre.
+eles são mais semanticos do que fucnionais, na verdade podemos usar quaquer um mas semanticamente tem diferença
+* GET 
+usado quando vou buscar uma informação do backend
+
+* POST
+para criar alguma recurso no backend
+
+* PUT 
+para editar ou atualizar um recurso no backend
+
+* PATCH
+confundivel com o put mas ele serve principalmente para atualizar uma informação UNIca ou especifica de um recurso no backend put é para atualizar praticamente tudo em uma entidade. o patch é para atualizar so uma pequena coisa.
+por exemplo o usuario vai atualizar seu formulario de usuario, foto, nome, descrição etc. usa o put.
+temos uma rota para atualizar apenas se o usuario quer ou nõ receber notificação. usamos o patch, é algo especifico.
+
+* DELETE 
+serve para deletar um recurso do backend
+
+no backend vamos diferenciar cada rota unicamente pela soma do metodo com a url.
+o que quer dizer que posso ter duas rotas no meu backend
+ex
+/users as duas serem a mesma url porem com metodos diferentes dessa forma
+POST /users => criou um usuario no backend
+DELETE /users => deletou um usuario do backend
+
+uma forma simples de a gente fazer isso para iniciar, que vai ser melhorada depois é com if
+vamos ver que como o primeiro if ja da um return nos chamamos isso de early return, o java script se isso for verdadeiro nem le o resto da função então podemos na segunda continuar com um novo if
+import http from 'node:http'
+
+
+const server = http.createServer((req, res)=>{
+    const {method, url} = req
+    
+if (method === 'GET' && url === '/users') {
+    return res.end('listagem de usuarios')
+}
+if (method === 'POST' && url === '/users') {
+    return res.end('usuario adicionado')
+}
+return res.end('hello world')
+})
+
+server.listen(3333)
+
+
+com esse codigo vamos ter la onde fazemos a requizição um retorno de usuario adicionado ou listagem de usuario a depender do que usarmos em nossarequisiçãp e se fizermos na /users. se não vai ser helloworld
+
+
+
