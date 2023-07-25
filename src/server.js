@@ -2,7 +2,7 @@ import http from 'node:http'
 
 
 const server = http.createServer((req, res)=>{
-return res.end('hello world')
+return res.end('teste')
 })
 
 server.listen(3333)

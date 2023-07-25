@@ -36,7 +36,7 @@ import http from 'node:http'
 
 
 const server = http.createServer((req, res)=>{
-return res.end('hello world')
+return res.end('hello start ')
 })
 
 server.listen(3333)
@@ -45,3 +45,13 @@ executamos com node src/server.js
 e ele vai ficar executando sem dizer nada porque ele esta ouvindo a porta 3333
 ai abrimos nosso navegador na porta 3333
 e ele vai mostrar la o helloworld.
+
+o node não fica observando o servidor e restartando ele a cada mudança que a gennte faz então isso pode levar a confusão de não ver o que fazemos surtir efeito. para evitar isso vamos logo no inicio do projeto fazer um watch. então ao executarmos o node vamos executar com watch
+node --watch src/server.js
+por qlgum motivo não funciona comigo, talvez por conta da memoria do pc.
+vamos adicionar um scrip de dev para fazer essa chamada agora podemos rodar com o npm run dev.
+o scrip fica assim no package jason
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch src/server.js"
+  },
