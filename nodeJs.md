@@ -139,7 +139,75 @@ return res.end('hello world')
 server.listen(3333)
 
 
-com esse codigo vamos ter la onde fazemos a requizição um retorno de usuario adicionado ou listagem de usuario a depender do que usarmos em nossarequisiçãp e se fizermos na /users. se não vai ser helloworld
+com esse codigo vamos ter la onde fazemos a requizição um retorno de usuario adicionado ou listagem de usuario a depender do que usarmos em nossarequisiçãp e se fizermos na /users. se não vai ser helloworld 
+
+# add users
+vamos salvar os usuarios dentro da memoria de nossa aplicação.
+,no node o projeto fica executando até se parar o projeto com cntrl c então todo que a gente declarar vai ficando salvo na memoria do node.
+isso é o ocnceito statefull 
+o statefull sempre vai ter agum tipo e informação sendo guardado em memoria, a aplicação depende das informação que sao salvas em memoria para continuar funcionando. caso ela perca seus dados e as informações em memoria ela pode não funcionar mais como estava
+uma aplicação stateless não salva nada em memoria então se a gente parar a aplicação e rodar ela de novo tudo vai se manter igual.
+porquequanto vamos criar uma ap statefull.
+vamos criar uma constante users que vai ser um array vazio.
+e a gente pode colocar um novo usuario dessa forma:
+if (method === 'POST' && url === '/users') {
+    users.push({
+        id: 1,
+        name: 'jhon doe',
+        email: 'jhon@doe.com'
+    })
+    return res.end('usuario adicionado')
+
+    porem para ver o usuario criado no pofdemos fazerso:
+    if (method === 'GET' && url === '/users') {
+    return res.end(users)
+
+    porque a resposta do backend nao pode ser so um array
+    ela pode ser uma string um buffer ou um uint8array (que tem a ver com o buffer)
+    por isso vamos transformar o array em json, assim ele voltqa como string.
+    para isso a gente vai fazer o JSON.stringfy(users)
+    claro que sempre que a gente resetar o servidor a gente perde os informações, por isso a aplicação statefull é problematica em produção, não podemos perder os dados do servidor. por isso nos usamos mecanismos como banco de dados queveremos a frente.
+    a nossa app esta assim e esta postando e trazendo de volta o users ela esta assim:
+    import http from 'node:http'
+
+const users = []
+const server = http.createServer((req, res)=>{
+
+
+    const {method, url} = req
+    
+if (method === 'GET' && url === '/users') {
+    return res.end(JSON.stringify(users))
+}
+if (method === 'POST' && url === '/users') {
+    users.push({
+        id: 1,
+        name: 'jhon doe',
+        email: 'jhon@doe.com'
+    })
+    return res.end('usuario adicionado')
+}
+return res.end('hello world')
+})
+
+server.listen(3333)
+
+
+porem, como o front end vai saber que trouxemos de volta um json?
+por isso é necessario o cabeçalho
+
+# headers
+tanto da req quanto da res eles são metadados e metadados são informações para que o back e o front end saiba lidar com aqueles dados da melhor forma.
+o headers não são bem a ver com o dado em si, mas sim meio que um manual de instruções para como o dado devo ser interpretado.
+então la no res.end vamos separar para ficar assim
+res
+.end
+e vamos setar tambem headers fica 
+res
+.setHeader(' aqui comocamos nome do cabeçalho  )
+.end()
+
+podemos pesquisar header mdn que tem uma lista de varios cabeçalhos comuns para termos em requisições. nos podemos dar o nome que quisermos mas tem alguns que são padroes de serem usados em api como o Content-type, onde a gente fala o conteudo e o tipo o tipo json vamos chamar de aplication/json
 
 
 
