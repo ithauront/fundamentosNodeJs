@@ -208,6 +208,70 @@ res
 .end()
 
 podemos pesquisar header mdn que tem uma lista de varios cabeçalhos comuns para termos em requisições. nos podemos dar o nome que quisermos mas tem alguns que são padroes de serem usados em api como o Content-type, onde a gente fala o conteudo e o tipo o tipo json vamos chamar de aplication/json
+fica assim:
+import http from 'node:http'
+
+const users = []
+const server = http.createServer((req, res)=>{
+
+
+    const {method, url} = req
+    
+if (method === 'GET' && url === '/users') {
+    return res
+    .setHeader('Content-type', 'aplication/json')
+    .end(JSON.stringify(users))
+}
+if (method === 'POST' && url === '/users') {
+    users.push({
+        id: 1,
+        name: 'jhon doe',
+        email: 'jhon@doe.com'
+    })
+    return res.end('usuario adicionado')
+}
+return res.end('hello world')
+})
+
+server.listen(3333)
+
+dessa forma ele ja entende o que é e quando devolve para a gente ja devolve na estrutura mais correta, dentro do array e do objeto.
+
+é bom saber que o frontend tambem envia headers em cada requisição
+e a cada devoulção do backend tambem vamos mandar com headers.
+se a gente der um req.headers a gente vai vr os metadados da requisição.
+
+# http status code
+quando devolvemos uma resposta cpara o frontend temos varios tipos de codigos numericos que enviamos para o frentend para dizer para o frontend o qeu aconteceu, erro, qual tipo de erro, se deu certo, qua tipo de informação estamos dando, etc. 
+se a gente procurar mdn http status code encontramos um guia com os status code mais importante
+eles tem 3 numeros e caminham por centenas de 100 a 600 e cada casa de centena se relaciona ao mesmo tipo de ocorrencia tipo 400 erros.
+o 200 é ok e é um padrão caso de sucesso ela responde 200 a n éao ser que a gente modifique ela.
+os 300 são redirecionamentos
+400 erros da parte do cliente ou seja o cliente informou um endereço errado, um email errado algo errado
+500 a 600 (termina em 599 não tem600) erro do server, o server não conseguiu responder por qlgum motivo. são erros inesperados, algo esta errado no backend. o banco de dados fora do ar por exemplo.
+
+como vamos usar isso então.
+na nossa resposta, não precisamos colocar algo como usuario criado, isso foi so para visualizar. e na resposta podemos informar o status ode usando o metodo writeHead(201) o 201 nesse caso simboliza uma resposta de sucesso de criação de algo.
+com isso ele vai simbolizar para o frontend que foi criado. e isso vem no cabeçalho que podemos ver com o httpie. fica assim
+if (method === 'POST' && url === '/users') {
+    users.push({
+        id: 1,
+        name: 'jhon doe',
+        email: 'jhon@doe.com'
+    })
+    return res.writeHead(201).end()
+}
+
+ao lançar o post o http a gente recebe isso
+HTTP/1.1 201 Created
+Connection: keep-alive
+Date: Wed, 26 Jul 2023 14:30:49 GMT
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+repare que tem o 201 created.
+paa brincar vamos fazer que se nem a rota de get nem a de post for chamada, vamos retornar um 404 de not found
+ 
 
 
 

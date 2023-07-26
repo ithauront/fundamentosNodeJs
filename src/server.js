@@ -17,9 +17,9 @@ if (method === 'POST' && url === '/users') {
         name: 'jhon doe',
         email: 'jhon@doe.com'
     })
-    return res.end('usuario adicionado')
+    return res.writeHead(201).end()
 }
-return res.end('hello world')
+return res.writeHead(404).end()
 })
 
 server.listen(3333)
