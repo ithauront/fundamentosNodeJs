@@ -273,5 +273,109 @@ repare que tem o 201 created.
 paa brincar vamos fazer que se nem a rota de get nem a de post for chamada, vamos retornar um 404 de not found
  
 
+# stream
+vamos criar uma pasta temporaria chamada stream para entendermos os conceitos do stream no node.
+o stream é muito importante para o node e ele é oresponsavel pelo sucesso do node.
+o stream permite que a gente obtenha e leia pequenas partes de algo mesmo sem estar com ele todo carregado.
+a gente pode trabalhar com qaueles dados mesmo antes de ter aquele arquivo por completo.
+imagina que vams fazer uma importação de clientes via excel
+é comum que a gente forneça para o usuario uma certa importação, o usuario da um upload de um aquivo em csv e a gente vai salvar ele no nosso sistema.
+mas imagina que o usuario vai mandar algo de um giga de tamanho. se a gente não estiver utilizando o stream e a gente permitir que isso aconteça o usuario vai subir o csv e ele vai ser enviado atravez por exemplo de uma rota post algo como
+POST /upload import.csv
+o node vai ter que ler esse arquivo completo e depois disso ele vai percorrer o arquivo inteiro fazendo cada uma das operações de post dele.
+agora imagina que o upload com a net da pessoa seja 10mb/s  vai demorar 100segudos para ela conseguir subir o arquivo. antes que o node comece a ler o arquivo e comece a fazer as incersoes.
+com o conceito de stream a gente pode ter a vantagem de que no primeiro segundo do upload ja entrou 10mg ali o node podia começar a ler esses dez megas, e ja ir começando a inserir ele no banco de dados, antes de esperar todo 1 giga ser enviado para o servidor.
+ou seja enquanto o upload esta sendo feito nos ja vamos processando ele.
+então temos ai dois tipos de stream
 
+os readble stream - stream de leitura - exemplo do csv - estamos lendo a informação aos poucos.
+
+writable stream - stream de escritura - netflix spotfy - nos estamos enviando (escrevendo para o usuario) uma informação aos poucos
+
+vamos criar esses conceitos em nossa aplicação.
+no node toda porta de entrada e saida é automaticamente uma stream
+ou seja o req e o res são streams.
+então ao fazer uma requisição http, eu posso manter essa requisição aberta e enviar dados para ela aos poucos.
+a mesma coisa quando devolvemos uma resposta, podemos devolver aos poucos.
+no node temos varias portas de entrada e saida. alem da das portas req e res nos vamos lidar para entender esse conceito com o processo do node. o stdin e stdout
+que é o que nos digitamos no terminal.
+
+
+# solução vs code sem reconhecer o node
+para solucionar isso nos precisamos adicionar o tipo node ao pacakge json.
+com o comando  npm install --save-dev @types/node
+
+agora ele vai reconhecer coisas com process e etc.
+
+# criando um stream de leitura
+vamos pegar o process é o processo que acontece no node
+o stdin retorna uma string conectada a ele. o std é = tudo que o usuario digita no terminal, por isso são strings
+depois disso vamos dar um .pipe() que é o encanamento no node a gente vai conectando as streams então por isso o pipe então se a gente pode ler dados aos poucos, a gente pode enviar esses dados aos poucos para uma stream que vai tratar deles. ai dentro do pipe vamos utilizar o process.stdout que vai ser o retorno da aplicação no terminal para mostrar como isso funciona.
+fica assim e vamos executar esse arquivo
+ node src/stream/fundamentsJS.js
+
+ ai o node fica rodando e tudo que a gente digitar no terminal e der enter ele devolve a mesma coisa para nos.
+
+ em outras palavras com o codigo que fizemos tudo que recebemos de entrada nos encaminhamos atravez do pipe para uma saida, o stdout. essa stream é de leitura e escrita por isso, estou lendo e escrevendo.
+ agora vamos construir streams do zero dentr de um projeto.
+ vamos  importr do node:stream a readeble e vamos criar uma classe que extende o readeble fica assim:
+ import {Readable} from 'node:stream'
+
+class OneToHundredStream extends Readable {
+    
+}
+
+toda classe readelbe recebe obrigatoriamenteo metodo _read() {}
+esse metodo vai retornar quais são os dados dessa stream
+vamos fazer essa função ir de um pra cem então vamos criar uma const index = 1
+e dentro do read vamos fazer const i = this.index++
+ou seja ir somando 1
+agora vamos fazer
+se o i for maior que 100 vamos executar this.push(null) push é o metodo para uma stream fornecer informações para quem estiver consumindo ela. ou seja dessa forma significa que ao ser maior que 100 não tem mais informações para serem adicionadas. ou seja, para.
+caso sontrario queremo enviar o i então fazemos um this.push(i)
+fica assim:
+import {Readable} from 'node:stream'
+
+class OneToHundredStream extends Readable {
+  index = 1
+    _read() {
+        const i = this.index++
+
+    if (i > 100) {
+        this.push(null)
+    } else {
+        this.push(i)
+    }
+    }
+}
+new OneToHundredStream().pipe(process.stdout)
+a linha do new é para ler a stream enquanto ele esta lendo a stream ele ja vai escrevendo.
+
+porem esse codigo da erro.
+porque?
+dentro da stream eu não posso trabalhar apenas com strings ou numeros. o pedaço de dados que eu estou consumindo (chamado de chunk) não pode estar em um tipo primitivo (stinrg, numero, boolean etc). a gente precisa trabalhar com o formato de buffer.
+então vamos criar uma variavel buff = Buffer.from(i)
+esse Buffer.from(i) vai receber qual informação eu quero converter nesse formato buffer e ai damos push buff e não push i. porem o buffer não aceita numeros, apenas string, então temos quedar um String *não stringfy*. fica assim:
+import {Readable} from 'node:stream'
+
+class OneToHundredStream extends Readable {
+  index = 1
+    _read() {
+        const i = this.index++
+
+    if (i > 100) {
+        this.push(null)
+    } else {
+        const buff = Buffer.from(String(i))
+        this.push(buff)
+    }
+    }
+}
+new OneToHundredStream().pipe(process.stdout)
+
+vamos deixar isso mais interessante. ao inves de apenas ler o i e adicionar mais 1 a gente colocar esse codigo dentro de um setTimeout dessa forma nos poderemos ver o funcionamento da stream indo aos poucos e andando e criando o resultado.
+um setTimeout normal demoraria um tempo para iniciar e quando iniciasse mostraria todos os numeros muito rapido(praticamente de vez).
+com uma stream ele vai mostrando cada numero aos poucos porque mesmo ates de terminar de ler ele ja entregou o primeiro ciclo e escreveu, depois ele inicia o segundo cilco e escreve etc.
+então para resumo com stream a gente consegue ir trabalhando os dados antes de eles estarem completamente processados.
+a gente fez essa stream do Zero mas os modulos internos do node vao nos permitir de não precisar fazer sempre do zero, por exemplo o req e res ja são streams se a gente der req.pipe ele ja aparece.
 
