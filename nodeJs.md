@@ -379,3 +379,60 @@ com uma stream ele vai mostrando cada numero aos poucos porque mesmo ates de ter
 então para resumo com stream a gente consegue ir trabalhando os dados antes de eles estarem completamente processados.
 a gente fez essa stream do Zero mas os modulos internos do node vao nos permitir de não precisar fazer sempre do zero, por exemplo o req e res ja são streams se a gente der req.pipe ele ja aparece.
 
+# stream de escritura
+vai receber dados de uma stream de leitura e fazer algo com eles. como por exemplo o stdout na nossa função anterior que escrivia os numeros no terminal.
+vamos fazer nossa stream de escritura. vamos importar writable
+vamos tambem fazer a classe e extender o wrtible
+class multiplyByTenStream extends Writable {
+    _write
+}
+colocamos o metodo write la dentro e ess metodo recebe tres parametros chunk encoding e callback
+
+o chunk é o pedaço que a genteleu na stream de leitura; ou seja o que esta no .push.
+encoding é como essa informação eta codificada callback é a função que a stream de escrita precisa chamar quando ela terminar de fazer o que ela precisa com essa informação.
+dentro de uma stream de escrita a gente não retorna nada. ela processa o dado. ela nunca transforma o dado em outra coisa, ela so processa.
+então vamos colocar ela pra escrever no console.log
+vamos pegar o chunk que é o buffer o chunk = this.push(buff) da função anterior, precisamos converter ele em uma string com o .toString() vamos colocar tudo dentro de um number para transformar essa string em um numero. e depois vamos multiplicar tudo por10 depois disso chamamos a callback pra demonstrar que encerrou. o encoding por enquanto não usamos. . fica assim:
+class multiplyByTenStream extends Writable {
+    _write(chunk, encoding, callback) {
+        console.log(Number(chunk.toString()) * 10)
+        callback() 
+    }
+}
+agora no lugar do pipe ao invez do stdout a gente vai colocar uma new multiplybytenstream() fica assim:
+
+class multiplyByTenStream extends Writable {
+    _write(chunk, encoding, callback) {
+        console.log(Number(chunk.toString()) * 10)
+        callback() 
+    }
+}
+
+
+new OneToHundredStream()
+.pipe(new multiplyByTenStream())
+
+# stream de transformação
+essa stream funciona para transformar um chunk em outro.
+vamos criar uma para transformar todo o numero em numero negativo.
+vamos importar o transform e fazer a classe, o parametro transform recebe os mesmos do wrtite chunk encoding callback
+class InverseNumbersStream extends Transform {
+    _transform(chunk, encoding, callback)
+}
+a diferença é que agora ao inves de um console.log e mudar o dado como eu quiser a gente vai pegar o dado com uma const. fica assim para transformar em negativo
+ _transform(chunk, encoding, callback) {
+    const transformedNumber = Number(chunk.toString()) * -1
+}
+agora quando chamarmos o callback vamos enviar para ele como primeiro parametro o null isso para representar o erro, caso tenha um erro ele vai retornar nulo o segundo parametro é o transformado. então vamos colocar o transformedNumber como um buffer e como string.
+fica assim:
+class InverseNumbersStream extends Transform {
+    _transform(chunk, encoding, callback) {
+    const transformedNumber = Number(chunk.toString()) * -1
+        callback(null, Buffer.from(String(transformedNumber)))
+
+}
+}
+
+agora la na nossa chamada a gente vai colocar um novo pipe antes do pipe do write para ele primeiro usar o transformed. ou seja é uma conexão que fazemos antes.
+a stream de leitura ela le dados, a de escrita escreve dados. a de transformação precisa ler dados e escrever. porque para transformar vc tem que ter a materia prima e tem que devolver algo.
+
