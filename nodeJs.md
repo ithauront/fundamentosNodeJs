@@ -436,3 +436,58 @@ class InverseNumbersStream extends Transform {
 agora la na nossa chamada a gente vai colocar um novo pipe antes do pipe do write para ele primeiro usar o transformed. ou seja é uma conexão que fazemos antes.
 a stream de leitura ela le dados, a de escrita escreve dados. a de transformação precisa ler dados e escrever. porque para transformar vc tem que ter a materia prima e tem que devolver algo.
 
+tem o ulimo tipo de stream que é a duplex que pode servir tanto para leitura quanto para escrita.
+podemos pensar em uma streamduplex como sendo um aquivo do nosso sistema. se a gente abre um novo file a gente pode tanto escrever quanto ler ele.
+mas néao necessariamente podemos transformar algo nele.
+
+na pasta de stream vamos criar um servidor http a parte para poder conectar o que a gente viu de steramcom os conhecimentos de http. nesse arquivo vamos criar um servidor http:
+import http from 'node:http'
+
+const server = http.createServer((req, res) => {
+    
+})
+sever.listen(3334)
+feito isso vamos criar outro arquivo chamado fakeuploadtoserver.
+e nele vamos criar uma requisição ficticia, como se fosse o frontend chamando uma requisição pesada que precisa ser enviada ao backend.
+vamos copiar o oneToHundredStream nesse novo arquivo.
+o node ja suporta a fetch api nativamente. então podemos utilizar a fetchApi para lidar com requisições de um endereço para outro.
+então no fim do arquivo fake vamos chamar a fetch de tro dela passamos o endereço do backend e no segundo arguento enviamos o metodo post porque para simular que estamos enviando uma informação aos poucos a stream so vai ser enviada por metodo post ou put, os outros medotos vao ser para um backend que vai dar write. e no body que é o conteudo da requisição vamos passar a new oneToHundredStream(). 
+fica assim:
+ fetch('http://localhost:3334', {
+    method: 'POST',
+    body: new OneToHundredStream(),
+  })
+
+  agora vamos no nosso servidor http e vamos copiar a inverse do e colocar ela antes da const server. 
+  agora dentro do server a gente vai pegar a req que é uma stream tambem. a gente pode pensar no req como uma readeble stream e o res como uma writable stream.
+  vamos dar um console.log na nossa inverseStream pegando a variavl transform.
+  agora dentro do nosso server a gente vai fazer um return.
+  pegar a req dar um pipe nela e esse pipe vai encaminhar a requisição para passar pela nossa função de inverse. e depois damos outro pipe para reencaminhar ela para a nossa resposta.
+  em outras palavras, da no mesmo de fazer isso:
+  new OneToHundredStream()
+.pipe(new InverseNumbersStream())
+
+so que ao invess de criarmos as streams de leitura e escrita a gente ta usando as stream ja criadas pelo node.
+a pagina fica assim:
+import http from 'node:http'
+import { Transform } from 'node:stream'
+
+class InverseNumbersStream extends Transform {
+    _transform(chunk, encoding, callback) {
+    const transformedNumber = Number(chunk.toString()) * -1
+    console.log(transformedNumber)
+        callback(null, Buffer.from(String(transformedNumber)))
+}
+}
+
+const server = http.createServer((req, res) => {
+return req
+.pipe(new InverseNumbersStream())
+.pipe(res)
+})
+server.listen(3334)
+
+agora  gente executa o nosso server, para ele escutar a porta 3334 e em outro terminal executamos tambem o nosso fake upload to server.
+
+
+
