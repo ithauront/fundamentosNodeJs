@@ -555,4 +555,73 @@ na função do fakeUpload vamos reduzir a contagem para não termos que esperar 
 ao rodar os dois programas ele vai esperar o tempo para o stream enviar todos o seu conteudo e depois ele vai mostrar isso de uma vez no console.log
 
 a vantagem de fazer esse tipo de sistema é que alguns arquivos tem metadados espalhados em varios pontos de seus conteudos, então nos não conseguiriamos reproduzi_los corretamente antes de carrega_los completamente. um dos tipos de dados que é muito dificil de consumir por partes é o formato de json, então esse tipo de operação se torna muito necessaria no nosso dia a dia.
- 
+
+ # corpo e requisição em JSON
+ vamos usar o que aprendemos para consequir receber dados no nosso servidor http para colocar dados no nosso banco de dados.
+ baixei o imnsomnia com ele vamos fazer requisiçoes de forma mais simles.
+ vamos rodar a nossa aplicação src/server.js
+ no insomnia nos vamos no canto superior direito e criar um novo colection
+ nessa colection que chamamos de fundaments vamos criar uma nova requisição
+ vamos colocar como post e no endereço o endereço do server localhost 3333/users
+ que é o endereço para postar users.
+ se a gente mandar a requisição ele retorna um 201 dizendo q foi criado.
+ vamos ducplicar essa requisição e mudar o nome para list users e mudar o metodo para get. assim ao enviar vamos ter a lista dos usuarios que ele criou.
+ porem nosso usuario esta hardcode la no nosso server, então se a gente mandar varios post ele sempre vai criar o mesmo funcionario.
+ no insomnia podemos ver que no copro da requisição existem varios formatos que podemos enviar nesse corpo.vamos escolher json e passar um objeto nesse objeto vamos setar o nome e o email do usuario.
+ {
+	"name": "iuri reis",
+	"email": "iuri@reis.com"
+}
+
+agora dentro do server vamos utilizar do conceito de buffer para fazer a adaptação do que enviamos na requisição para completar o usuario.
+vamos no server:
+pegamos a mesma logica de fazer buffer e aplicamos la com o corpo de nossa requisiçãoq ue vai vir no req. fica assi:
+const server = http.createServer(async(req, res)=>{
+    const {method, url} = req
+
+    const buffers = []
+    for await (const chunk of req){
+        buffers.push(chunk)
+    }
+
+    const body = Buffer.concat(buffers).toString()
+    console.log(body)
+    
+se a gente voltar no insomnia e der um send ele vai mostrar no log os dados que enviamos. mas ainda não estamos armazenando isso no users e eles estão como texto e não como objeto. então vamos tentar converter isso em json. vamos la no body e damos um json.parse
+const body =JSON.parse( Buffer.concat(buffers).toString())
+agora que ja temos acesso ao body comoum objetso em json a gente pode no metodo de post fazer uma desestruturação e usar esses dados na hora de inserir o usuario. fica assim:
+if (method === 'POST' && url === '/users') {
+    const { name, email } = body
+    users.push({
+        id: 1,
+        name,
+        email,
+    })
+
+    ele vai pegar o name e oemail que vem do body.
+    porem se usarmos o get vamos ter um erro porque o body json vai tentar executar mesmo quando o corpo da requisição estiver vazio (que é o caso do nosso get.) e ai teremos um erro. para evitar isso vamos fazer um try aplicando o body dentro do req e não mais como const try { 
+        req.body = Buffer.concat(buffers).toString()
+    } 
+    caso de erro vamos adicionar um catch (que provavemente vai ser o erro por que o corpo veio vazio/)
+    vamos dar um req.body = null
+    fica assim:
+    const server = http.createServer(async(req, res)=>{
+    const {method, url} = req
+
+    const buffers = []
+    for await (const chunk of req){
+        buffers.push(chunk)
+    }
+
+    try {
+        req.body =JSON.parse( Buffer.concat(buffers).toString())
+    }catch {
+        req.body = null
+    }
+        
+        no nosso post vamos trocar o body por req.body tambem.
+
+* com isso usamos o conceito do buffer para mandar objetos em json para nosso server e armazenar eles em um banco de dados.
+
+
+
