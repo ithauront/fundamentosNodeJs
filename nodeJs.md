@@ -623,5 +623,80 @@ if (method === 'POST' && url === '/users') {
 
 * com isso usamos o conceito do buffer para mandar objetos em json para nosso server e armazenar eles em um banco de dados.
 
+# buffer
+o buffer é uma representação de um espaço na memoria do computador onde os dados são tratados de forma rapida, salva e le na memoria de maneira muito performatica.
+o node usa isso porque é mais performatico ler uma informaão de forma binaria do que um texto uma string  que tem mais informação.
+o buffer foi uma api criada no node especialmente pela incapacidade do javascript de trabalhar com dados binarios de maneira eficiente. hoje em dia ate tem a typedarray que existe mas néao é muito usada.
+caso a gente crie um buffer
+const buf = Buffer.from("ok)
+e dermos um console.log nisso ele vai retornar <Buffer 6f 6b>
+isso é um hexadecimal onde cada um representa uma letra.
+ou seja o que a gente escreve esta representado em hexadecimal e depois convertido, como a memoria do computador so trabalha em dados binarios sendo salvo assim o compiutador consegue processar muito mais rapdio. se a gente colocar um console.log(buf.toJSON()) ele vai transformar isso em decimal e não mais em hexadecial, mas vai consitnuar em dados binarios e processando rapido.
+isso tudo para explicar porque o buffer é usado para streams, a gente popula o buffer com streams e ele consegue processar isso muito rapido poraue ele não usa strings.
+
+# midleware
+agora que vamos dicionar mais fucnionalidades vamos começar a separar um pouco as partes de nosso server.js para não ficar muito confuso.
+por exemplo a parte que consume o body da requisição pode estar em outro arquivo.
+vamos copiar essa parte do codigo:
+ const buffers = []
+    for await (const chunk of req){
+        buffers.push(chunk)
+    }
+
+    try {
+        req.body =JSON.parse( Buffer.concat(buffers).toString())
+    }catch {
+        req.body = null
+    }
+
+    vamos criar em src uma pasta chamada midlewares
+    nessa pasta vamos criar um arquivo chamado json.js
+    e exportar ums função assicrona chamada json
+    essa função vai receber o req e res do servidor.
+    e vai executar esse codigo que copiamos.
+    fia assim:
+    export async function json (req, res) {
+    const buffers = []
+    for await (const chunk of req){
+        buffers.push(chunk)
+    }
+
+    try {
+        req.body =JSON.parse( Buffer.concat(buffers).toString())
+    }catch {
+        req.body = null
+    }
+}
+
+agora la dentro do nosso server nos podemos chamar
+json e importar ela do middleware e passar req e res como parametro.
+assim : 
+await json(req, res)
+por ser uma função assincrona e ter um await nela nos vamos botar um await antes da chamada dessa função no server. colocamos o .js depois do json dentro da importação e ai vai fucnionar normalmente. isso porque usando o type modules ele precisa especificar o tipo do arquivo.
+porque usamos o nome do middleware significa um interceptador.
+é uma função que intercepta nossa requisição por poutro arquivo. eles sempre recebem como parametro o req e res, eles são tratados la dentro.
+nos podemos aproveitar esse middleware para transformar todas as respostas do nosso backend em json então vamos pegar essa linha la do server:
+res
+    .setHeader('Content-type', 'aplication/json')
+    a função fica assim:
+    export async function json(req, res) {
+    const buffers = []
+    for await (const chunk of req){
+        buffers.push(chunk)
+    }
+
+    try {
+        req.body = JSON.parse(Buffer.concat(buffers).toString())
+    }catch {
+        req.body = null
+    }
+
+    res.setHeader('Content-type', 'aplication/json')
+}
+
+em um unico arquivo lifamos com a recepcçéao e com a resposta transformando ambos em json
+
+essa linha que a gente corta do srver a gente substitui so por res
+
 
 
