@@ -698,5 +698,94 @@ em um unico arquivo lifamos com a recepcçéao e com a resposta transformando am
 
 essa linha que a gente corta do srver a gente substitui so por res
 
+por enquanto nõ estamos salvando nossos dados em um banco de dados, que guardaria eles de forma mais pemranente, estamos trabalhando com um array de memoria, ou seja caso a gente reincie o servidor a gente perde tdo.
+vamos criar um banco de dados completo baseado em arquivos fisicos.
+# bando de dados JSON
+então uma das fomras de salvar os dados para não perder caso o servidor reinicie é salvar os dados dentro de um qrquivo fsico, fora do server.ai quando nossa aplicação iniciar ela le esse arquivo e popula o banco de dados com os dados que ja existiam anteriormente, e sempre que a gente mudar algo a gente atualiza esse arquivo.
+criamos um arquivo chamado database.js e uma classe chamada database.
+então por enauqnto estamos fazendo duas operações de leitura e escrita dos usuarios.
+mas gostariamos de poder salvar qualquer tipo de informação dentro dele e não so usuarios. entéao dentro dele vamos criar uma propriedade chamada database= { } ou seja essapropriedade é igual um objeto. dentro dese objeto database, teremos varios tipos de informações como  tabela de users, 
+apos isso vamos criar o metodo insert e ele vai receber a tabela que queremos inserir e os dados. e tambem o metodo select que vai receber a tabela e ele vai retornar todos os dados dessa tabela.
+fica assim:
+export class Database {
+database = {}
+
+select(table) {
+
+}
+insert(table, data) {
+
+}
+}
+
+vamos fazer o retorno do select
+const data = this.database[table] ?? []
+até o momento nos fazemos ele olhar o databese e procurar se existe uma tabela com o mesmo nome da tabela que o select receber como parametro. as interrogações significam que se não existir, ele retrna um array vazio.
+depois disso damos um return data
+na parte de inserir nos vamos verificar se aquele registro ja existe, se néao existir nos vamos criar um array
+if (Array.isArray(this.database[table])) {
+    this.database[table].push(data)
+}
+ou seja se ja exite um array inserido nessa tabela com o mesmo nome dessa tabela que recebemos, nos vamos apenas inserir nessa tabela que ja existe o nosso data
+else {
+    this.database[table] = [data]
+}
+se não vamos criar um novo array com a data.
+e depois retornar o item que foi inserido(data)
+o total fica assim:
+export class Database {
+database = {}
+
+select(table) {
+const data = this.database[table] ?? []
+
+return data
+}
+
+insert(table, data) {
+if (Array.isArray(this.database[table])) {
+    this.database[table].push(data)
+}else {
+    this.database[table] = [data]
+}
+return data
+    }
+    
+}
+
+agora vamos aplicar esse banco de dados dentro do nosso server.
+no lugar da const de users a gente cria uma const chamada database = new Database()(importado do nosso arquivo)
+e agora onde a gente dava users.push a gente vai apagar e pegar a forma do objeto e configurar ele como uma constante chamada users assim
+   const users = {
+    id: 1,
+    name,
+    email,
+}
+e logo abaixo a gente vai executar um database.insert('users' , users)
+o primeiro parametro é o nome da tabela, e o segundo é a informação que queremos inserir. o metodo post fica assim:
+if (method === 'POST' && url === '/users') {
+    const { name, email } = req.body
+   const users = {
+    id: 1,
+    name,
+    email,
+}
+database.insert('users',users)
+    return res.writeHead(201).end()
+}
+
+no metodo get passamos o database.select('users') o select com o nome da tabela  e depois retornamos isso como resposta assim:
+if (method === 'GET' && url === '/users') {
+    database.select('users')
+    return res
+    .end(JSON.stringify(users))
+}
+
+com o codigo atualizado assim ele fucniona. porem se resetarmos o servidor perdemos os dados porque ainda não estamos salvando em arquivo fisico.
+
+da forma que esta a gente criou o metodo insert e seletc para que so se possa mexer no database por esses metodos, ou seja um acesso controlado. porem do jeito que esta ainda conseguimos acesso ao nosso database por arquivos externos, se agente for no terminal e fizer Database.database nos vamos conseguir controlar o nosso banco de dados.
+o node tem um sistema de propriedade e metodos privados.
+então se colocamos um # antes do objeto database dentro do nosso arquivo database, ele fica privado. e o codigo continua rodando normalmente.
+
 
 
