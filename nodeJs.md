@@ -488,6 +488,71 @@ return req
 server.listen(3334)
 
 agora  gente executa o nosso server, para ele escutar a porta 3334 e em outro terminal executamos tambem o nosso fake upload to server.
+a partir das novas atualizações do node precisamos adicionar o duplex tambem. então fica assim:
+fetch('http://localhost:3334', {
+    method: 'POST',
+    body: new OneToHundredStream(),
+    duplex: 'half',
+  })
+
+  com eses codigos rodando o que acontece é que o fakeupload abre uma conequão atravez da requisião e ela não fecha. essa conexão continua em stream e nosso server vai computando ela enauqnto ela vai chegando.
+
+  # consumindo completamente
+  em alguns casos eu vou querer consumir todos os dados da stream antes de começar a processalos.
+  para fazer isso existe uma sintaxe especifica para trabalhar com isso dentro do node.
+  vamos criar um array e chamar ele de buffer
+  const buffer = [  ]
+a gente percorre a stream populando o buffer, e depois a gente trabalha com o array de forma completa. em outras palavras, a gente continua recebendo a stream aos poucos, mas a gente armazena cada pedaço em um array, e quando estiver completo nos vamos usar o array inteiro.
+acredito que podemos fazer isso tambem para alguns arquivos mais pesados, onde nos poderiamos armazenar por exemplo 30% do arquivo antes de iniciar o trabalho com ele. a fim que uma vez que o trabalho seja iniciado ele seja mais provavel de ser continuo e não fique sendo interropido sempre para esperar o proximo chunk. eu disse isso com exemplo dos videos, que geralmente carregam uma parte antes de começar a tocar, assim nosso sistema vai estar processando alguns segundos ou minutos a frente do que o usuario esta vendo.
+como vamos fazer isso? (antes vou criar um novo arquivo chamado buffer e nele colocar nosso array.:)
+import http from 'node:http'
 
 
+const serverHttp = http.createServer((req, res) => {
+    const buffer = []
+})
 
+
+vamos percorrer a nossa stream de requisição, para isso nos podemos usar o for junto com await. usar o await dentro de uma stream faz aguardar cada pedaço da stream ser retornado. entéao podemos pegar a const chunk of req e com isso dar um push no array buffer:
+const serverHttp = http.createServer(async (req, res) => {
+    const buffers = []
+    for await (const chunk of req) {
+        buffers.push(chunk)
+    }
+})
+
+esse await não vai permitir que nada execute durante o carregamento da stream. no final quando tudo estiver captado. temos que colocar o async tambem porque sempre que usamos o await precisamos definir que a função é assincrona.
+apos que estiver terminado o buffer nos vamos ver o conteudo completo. vamos dar um    const fullStreamContent = Buffer.concat(buffers).toString()
+sabendo que esse Buffer com maiusculo é um elemento do node não confundir com o nosso array que é buffers com minusculo e s que esta sendo passado para o Buffer.concat para que ele seja unido todas as pequenas partes que foram armazenadas no array. 
+apos isso damos un console.log(fullStreamContent) e retornamos tambem um res.end(fullStreamContent).
+no fim damos um server.listen(3335) a porta que para onde vamos mandar nossa requisição.
+fica assim:
+import http from 'node:http'
+
+
+const serverHttp = http.createServer((req, res) => {
+    const buffers = []
+    for await (const chunk of req) {
+        buffers.push(chunk)
+    }
+    const fullStreamContent = Buffer.concat(buffers).toString()
+    console.log(fullStreamContent)
+
+    res.end(fullStreamContent)
+})
+
+serverHttp.listen(3334)
+//mesma porta do streamHTTPSERVER, não podemos rodar as duas ao mesmo tempo.
+
+vaos voltar no nosso fakeUploadToServer e fazemos depois do fetch um .then(response =>{
+    reponse.text().then(data => {
+        console.log(data)
+    })
+})
+ou seja depois do fetch nos vamos pegar a resposta que o fetch troxe, transformar ela em texto. e essa resposta da trasnformação de texto (que vamos chamar de data, nos vamos dar um cosole.log(data))
+na função do fakeUpload vamos reduzir a contagem para não termos que esperar até cem.
+
+ao rodar os dois programas ele vai esperar o tempo para o stream enviar todos o seu conteudo e depois ele vai mostrar isso de uma vez no console.log
+
+a vantagem de fazer esse tipo de sistema é que alguns arquivos tem metadados espalhados em varios pontos de seus conteudos, então nos não conseguiriamos reproduzi_los corretamente antes de carrega_los completamente. um dos tipos de dados que é muito dificil de consumir por partes é o formato de json, então esse tipo de operação se torna muito necessaria no nosso dia a dia.
+ 
