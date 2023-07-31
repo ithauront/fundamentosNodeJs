@@ -787,5 +787,149 @@ da forma que esta a gente criou o metodo insert e seletc para que so se possa me
 o node tem um sistema de propriedade e metodos privados.
 então se colocamos um # antes do objeto database dentro do nosso arquivo database, ele fica privado. e o codigo continua rodando normalmente.
 
+# persistencia no banco de dados
+vaùos deixar o banco de dados persistente para que cada alteração nele se mantenha apos reinciarmos a aplicação.
+para trabalhar com arquivos fisicos dentro do node precisamos importar o fs do 'node:fs' fs nesse caso significa fime stitem
+nos temos duas opções. o fs, e o fs/promisses, o promisses funciona para trabalhar com o formato de asincronismi que são as promises, então podemos usar o .then etc.
+ o fs normal precisamos usar callback.
+ vamos usar o promisse
+ porem o metodo promisse não tem os formatos de steraming. então se formos ler ou escrever stream a gente néao pode acessar o fs/promisse, porque néao teremos as opçéoes como creatStream/
+ agora que temos o:
+ import fs from 'node:fs/promises'
 
+ vamos criar um metodo chamado #persist() {}
+ e ai vamos escrever o banco de dados em um arquivo fixo. ele vai ser chamado toda vez qpos inserirmos algo no banco de dados. então nas nossa funcão antes do return data vamos chamar ele assim:
+ this.#persist()
+ dentro do metodo persiste vamos usar fs.writeFile('nome do arquivo.json') como esse tipo de arquivo vai estar sendo lido pelo node a gente passa logo ele como json.
+e no segundo arumento usamos o json.stringfy para converter o banco de dados em uma estrutura json.
+  #persist() {
+    fs.writeFile('db.json', JSON.stringify(this.#database))
+   }
+o arquivo fica assim :
+import fs from 'node:fs/promises'
 
+export class Database {
+
+    #database = {}
+
+   #persist() {
+    fs.writeFile('db.json', JSON.stringify(this.#database))
+   }
+
+select(table) {
+const data = this.#database[table] ?? []
+
+return data
+}
+
+insert(table, data) {
+if (Array.isArray(this.#database[table])) {
+    this.#database[table].push(data)
+}else {
+    this.#database[table] = [data]
+}
+
+this.#persist()
+return data
+    }
+    
+}
+ e se a gente rdar o terminal agora e dar um post vamos criar o arquivo db.json dentro da raiz do nosso projeto com o nome do usuario que demos no post.
+ isso acontece porque o node leva em conta o local  localstamos executando a aplicação como sendo o local para se salvr as coisas. se a gente executar a aplicação de dentro da pasta src ele salvaria o banco de dados ali.
+ como resolver o problema do caminho
+ a forma mais atual de fazer isso é a seguinte;
+ antigamente a gente podia ter funções com o nome como dirName mas a partir do momento que usamos o type: modules essas funções não existem mais.
+ como resolver issoa tuamente? vamos usar uma outra variedade global que existe que se chama import.meta. se a gente usar um import.meta/url  ele vai te retornar o caminho completo até o onde esta o arquivo em que esse import.meta.url foi escrito.
+
+ vamos tambem usar o construtor com o new e uma classe interna do node chamada url para fazer o databasePAth. dentro da url nos podemos enviar 2 parametros:
+ 1 o nome do arquivo que queremos criar 
+ 2 o caminho remativo onde queremos criar esse qrauivo.(e aqui podemos usar o import.meta.url)
+ vamos criar uma const
+ const databasePath = new URL('db.json', import.meta.url)
+
+ é bom saber que o primeiro parametro é como se fosse um comando para o cd tambem. se a gente comecasse ele com um ../db.json ele iria pegar o caminho do import.meta.url e voltar uma pasta.
+ agora que temos o databasePath criado podemos passar ele como primeiro parametro do nosso writefile que ele ele vai criar o arquivo no lugar certo.
+ o databasepath é declarado antes de abrir a função, ou seja fora dela. o arquivo completo fica assim:
+ import fs from 'node:fs/promises'
+
+const databasePath = new URL('db.json', import.meta.url)
+
+export class Database {
+
+    #database = {}
+
+   #persist() {
+    fs.writeFile(databasePath, JSON.stringify(this.#database))
+   }
+
+select(table) {
+const data = this.#database[table] ?? []
+
+return data
+}
+
+insert(table, data) {
+if (Array.isArray(this.#database[table])) {
+    this.#database[table].push(data)
+}else {
+    this.#database[table] = [data]
+}
+
+this.#persist()
+return data
+    }
+    
+}
+
+agora se a gente rodar o progtram e der um post independente de onde o programa estiver girando na past do app, a criação do database vai ser relativa ao endereço que definimos. no nosso caso continua sendo a raiz do projeto porque colocamos o ../ antes do db.json
+
+agora que o arquivo ja esta persistenta falta apenas recupera_lo qo inicializarmos.
+para isso vamos ciar uma função construtora.
+constructor() {
+    fs.readfile(databasePath)
+}
+no segundo parametro passamos qual encoding estamos usando. utf_8
+depois disso um .then porque isso é uma promisse
+ai depois a gente vai pegar o data => e colocar no this database. evamos pegar o json e dar um parse(data)
+no catch da promisse que o erro seria o arquivo não existir nos vamos chamar o persist para ele criar o arquivo mesmo que vazio. o arquivo fica assim:
+import fs from 'node:fs/promises'
+
+const databasePath = new URL('../db.json', import.meta.url)
+
+export class Database {
+
+    #database = {}
+
+    constructor() {
+        fs.readFile(databasePath, 'utf-8').then(data => {
+            this.#database = JSON.parse(data)
+        })
+        .catch(() => {
+            this.#persist()
+        })
+    }
+
+   #persist() {
+    fs.writeFile(databasePath, JSON.stringify(this.#database))
+   }
+
+select(table) {
+const data = this.#database[table] ?? []
+
+return data
+}
+
+insert(table, data) {
+if (Array.isArray(this.#database[table])) {
+    this.#database[table].push(data)
+}else {
+    this.#database[table] = [data]
+}
+
+this.#persist()
+return data
+    }
+    
+}
+
+dessa forma a gente pode rodar o programa e reiniciar ele que o nosso banco de dados vai ficar salvo.
