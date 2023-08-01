@@ -1005,3 +1005,40 @@ if (route) {
 caso a gente encontre uma rota, vamos retornar o handler que é a função que criamos la no routes, passando o req e o res para ela.
 agora nos usamos uma verificação unica para encontrar a rota correta, e o server fica mais limpo e a gente pode ir criando novas rotas la no routes.
 
+# 3 formas do front end enviar informaç éoes
+1 query parametres -( parametros nomeados que enviamos n endereç da requisição por exemplo www.teste.com/users?userID=1&age=18) o que vem depois da interrogação é o query rametres a chave é userID e a chave é 1 cada parametro informado tem uma chave e vamor. podemos usar mais parametros so colocar o & depois do valor e adicionar mais umparametro como ta no exemplo. eles são usados geramentre quando precisamos ter uma url stateFULL ou seja uma aplicação que depende de estados, ou seja vai mudando quando resetamos a aplicação, os parametros não ficam armazenados. vamos usar esses parametros com informações não sensiveis e que véao modificar a resposta que a url vai nos dar, como por exemplo filtros, paginação etc; geralmente os parametros não são obrigatorios
+2 route parametres - parametros não nomeados que ficam na rota. www;teste.com/users/1 veja que o 1 faw auqse parte do endereço ele não tem interrogação nem nada, ele é um routeparametre, geralmente são usados para identificação de recurso. nesse caso chamando essa rota com o metodo get, a gente poderia entender que estamos buscando o usuario com id1. ele não precisa ter m nome porque o metodo http ja diz o que esse nome significa. se for delete, a gente entende que queremos deletar o user com id 1. para entender essa rota a gente faz uma combinação de recurso url e metodo, e com esss tresa gente consegu entender.
+3 request body - não fica naurl, pode ser usado para envio de informações sensveis. geralmente um formulario, pode ser usado para envio de quantas informações a gente quizer. eles passam pela criptografia. 
+sabendo desses conceitos vamos criar as rotas para edição e remoção do usuario.
+# DELETE
+vamos la em routes.js
+criar um novo obeto. passar method delete para ele.
+no path a gente pode usar um route parametr para idendificar um usuario especifico na aplicação. seria algo como path/users/ID porem se a gente fizer isso ou um numero, vai dar errado porque para conseguir chamar essa a gente vai ter que ir la no imnsomina e colocar o id na rota, so que o id é algo grande que foi gerado automaticamente, e nem sempre o usuario vai ter acesso a isso. esse parametro é dinamico, cada usuario tem um id diferete. precisamos de um id que seja dinamico.
+
+# regex
+vamos criar um gerador dinmico de caminhos das rotas para que ele possa interpretar o parametro dinamico.
+a gente identifica esse tipo de parametro com : então sempre que a gente tiver na rota algo como /users/: significa que vamos ter um parametrodinamico. e vamos dar um nome para ela no caso id. mas para que esse id seja interpretado vamos criar uma regex.
+vamos criar uma pasta no src chamada utils e dentro dela um arquivo chamado build-route-path
+nela vamos fazer uma função que vai receber o path. e dentro dela vamos criar uma regex.
+para criar uma regex vamos colocar essas duas barras e dentro delas vamos escrever algo
+const routeParametersregex = /:()/ 
+uma regex é uma expressão regular. é uma forma de encontrar textos que seguem um formato especifico dentro de um texto maior. 
+const routeParametersregex = /:([a-zA-Z])+/ 
+ou seja queremos encontrar no texto tudo que começa com : e depois dela queremos algo que tenha etras que podem ser maiusculas ou minusculas e que vao de a a Z e eas podem se repetir uma ou mais vezes por conta do simbolo de +
+exite umaextenção chamara regex previw que a gente pode usar para ir testando os regex.
+de qualquer forma assim ele vai identificar um parametro, mas caso a gente tenha dois parametros dinamicos ele não identifica os dois. então temos que colocar um g para identificar que ela é global   fica assim:
+/:([a-zA-Z]+)/g
+
+exite um metodo de javascript chamado matchAll() que ele vai fazer uma busca pelo parametro e ver se bate na regex. mas ele volta um tipo de informação que não da pra ler por isso colocamos um Array.from por volta dele. fica asim
+console.log(Array.from(path.matchAll(routeParametersregex)))
+vamos usar esse console.log para verificar se esta fucnionando.
+
+agora na nossa routes a gente vai colocar o buildRoutePath por volta de todos os paths fica assil:
+ path:buildRoutePath( '/users'),
+
+[]
+[]
+[ [ ':id', 'd', index: 7, input: '/users/:id', groups: undefined ] ] 
+eu recebo isso acima no console.log. ou seja para os metodos get e post que não tem os :id ele devolve um array vazio. mas para o metodo delete que tem o id ele retorna o id um d o index o input e o grpous
+
+
