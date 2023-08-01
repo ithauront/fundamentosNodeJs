@@ -950,3 +950,58 @@ if (method === 'POST' && url === '/users') {
     name,
     email,
 }
+
+# separando rotas da aplicação
+nos vamos precisar tratar com muitas rotas em nossa aplicação, ja temos duas mas poderiamos facilmente pensar em outra para deletar, outra para buscar um unico usuario e não uma lista, outras funcionalidades que não sejam so usuarios, etc. então para não ficar muitos ifs. vamos separar essas rotas.
+no middlewatre vamos criar um arquivo chamado routes.js
+dentro dele vamos exportar a const routes que vai ser um array, e dentro desse arry cada rota vai ser um objeto.
+esse objeto vai ser composto do methodo que vai ser usado nessa rota (get, post, etc). o endereço que vamos chama nessa rota path: '/users'
+e o que vai acontecer quando chamarmos essa rota que vai ser o handler (req, res) => { aqui vai a mesma coisa que escrevemos la na nossa rota}.
+fica assim:
+export const routes = [
+    {
+        method: 'GET',
+        path: '/users',
+        handler: (req, res) => {
+            const users =  database.select('users')
+    return res.end(JSON.stringify(users))
+        }
+    },
+    {
+        method: 'POST',
+        path: '/users',
+        handler: (req, res) => {
+            const { name, email } = req.body
+            const users = {
+             id: randomUUID(),
+             name,
+             email,
+         }
+         database.insert('users',users)
+             return res.writeHead(201).end()
+        }
+    }
+]
+
+agora vamos precisar importar algumas coisas nesse arquivo.
+ o banco de dados sai do server e vai pra o routes.
+ const database = new Database()
+ fica antes e abrir o array.
+ e importamos tambem o Database ai no routes
+ e o random UUID tambem vai sair do server e ir para o routes.
+ agora no server vamos mudar os nossos if.
+ vamos apagar os ifs
+ e vamos fazer um pouco diferente
+ nos temos acesso ao metodo e a url no server que é o metodo e o ptah que nos fizemos no routes.
+ qo entrar alguma requisição no server a gente vai verificar no array de rotas se existe algum registro que sej igual a requisição que estamos qo usuario pediu. vamos dar um 
+ const route = routes.find(route => {
+return route.method === method && route.path === url
+})
+isso vai fazer a gente percorer o array routes e achar uma rota onde o methodo seja igual o metodo pedido e o path seja igual ao url pedido pelo usuario.
+agora vamos fazer a condicional para aplicar a rota
+if (route) {
+    return route.handler(req, res)
+}
+caso a gente encontre uma rota, vamos retornar o handler que é a função que criamos la no routes, passando o req e o res para ela.
+agora nos usamos uma verificação unica para encontrar a rota correta, e o server fica mais limpo e a gente pode ir criando novas rotas la no routes.
+
