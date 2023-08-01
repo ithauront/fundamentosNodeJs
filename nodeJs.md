@@ -1041,4 +1041,27 @@ agora na nossa routes a gente vai colocar o buildRoutePath por volta de todos os
 [ [ ':id', 'd', index: 7, input: '/users/:id', groups: undefined ] ] 
 eu recebo isso acima no console.log. ou seja para os metodos get e post que não tem os :id ele devolve um array vazio. mas para o metodo delete que tem o id ele retorna o id um d o index o input e o grpous
 
+O qu nos queremos agora é trocar o id que pode vir como dinamico por outra regex que pode vir com valor nesse campo.
+vamos criar uma outra constante chamada path with parms
+e nela vamos pegar o path e dar uma replaceall passando a regex como primeiro parametro, com isso vamos encontrar na regex todos os locais onde da match. e vou substituir por uma string colocando ela no segundo parametro. essa string vai ser outra regex. que vai ser nes=ssa formatação indicando o que podemos incluir de texto no parametro dinamico, letras de a a Z numeros de 0 a 9 hifen e underline(que precisam de barra invertida na frente) e colocamos o + para significar que podemos ter 1 ou mais caracteres.
+fica assim:
+const pathWithParams = path.replaceAll(routeParametersregex, '([a-z0-9\-_]+)')
+isso acima vai transformar o nosso path de /users/:id para um /users/:[a-z0-9\-_]+
+ou seja ele ja vai entender qualquer coisa dentro desses caracteres como valido.
+
+agora fazemos uma nova regex chamando de pathRegex nela damos um new RegexExp e para isso passamos uma interpolação dizendo que nossa url precisa começar com a pathwithparams usamos o sinal de ^para dizer que começa. fica assim:
+const pathRegex = new RegExp(`^${pathWithParams}`)
+
+agora podemos retornar a pathRegex, mas ainda vamos fazer algumas outras alterações.
+
+até o momento no server para validar as rotas a gente via se o metodo era igual e se o url era igual ao path. mas agora vamos mudar isso, toda a regex tem um metodo chamado test. que retorna true ou false caso a string que a gente passe seja valida naquela regex. então nos vamos passar o route.path.test(url) dentro do test a gente passa a nossa url para o regex testar.
+com isso ja estamos identificando os parametros dinamicos e se usarmos os ids que criamos ele vai funcionar. o que precisamos fazer agora é que dentrodo codigo o dado do id gerado.
+para isso vamos la no server, dentro do if(route) vamos fazer uma const para que a req url seja igual ao route.path assim;
+const routParams = req.url.match(route.path)
+nos vamos executar a regex na nossa url paraque ela te diga quais os dados que ela executou em nossa rota. ou seja o que ela encontrou.
+agora el ja consegue identificar o id do usuario pelo parametro da rota. porem se a gente colocar varios routeparams como o id do usuario e do grupo vai ficar confuso. porque eles não dão os nomes dos dados. então nos podemos noemar os grupos na regex. dentro da regew dentro dos parenteses eu posso colocar um ?<tudo que escrever qaui vai ser o nome do grupo>
+porem lembra que quando a gente fez o primeiro regex ela buscava o nome do campo
+[ [ ':id', 'id', index: 7, input: '/users/:id', groups: undefined ] ] 
+aqui temos id como primeiro. se dentro das chaves da interrogação a gente colocar um $1 ele vai trazer esse nome do campo para o nosso identificador do parametro.
+usando isso se a gente der varios parametros de /id/groupId. ele vai acabar identificando todos pelo nome.
 
