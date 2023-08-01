@@ -933,3 +933,20 @@ return data
 }
 
 dessa forma a gente pode rodar o programa e reiniciar ele que o nosso banco de dados vai ficar salvo.
+
+# id unico
+da forma que esta nosso codigo todos us usuarios esão sendo criados com o id 1.
+nos precisamos mudar isso para que os ids sejam unicos a fim de não gerar problema quando formos manipula-los.
+existem varias formas de fazer isso, aqui vamos importar do node: crypto uma função chamada random UUDI.unique universal id um id unico universão. não interessa quantas essa função seja chamada ela sempre vai trazer um id diferente. esse id vai ser uma string.
+na nossa const user a gente vai colocar essa função. a gente poderia tambem usar o math.random() mas isso ão é um id universão unico, então pode ocasionalmente dar erro um dia. por isso preferimos usar o UUID.
+a importação fica assim:
+import {randomUUID} from 'node:crypto'
+
+e o metodo post no server fica assim:
+if (method === 'POST' && url === '/users') {
+    const { name, email } = req.body
+   const users = {
+    id: randomUUID(),
+    name,
+    email,
+}
