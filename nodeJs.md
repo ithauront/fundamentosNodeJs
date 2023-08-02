@@ -1112,3 +1112,29 @@ precisamos pesquisar se a informação existe no banco de dados então vamos dar
             return res.writeHead(204).end()
         }
 
+# PUT 
+vamos fazer o metodo put para atualização do usuario, é o put porque vamos atualizar todos os dados de uma vez.
+nas rotas vamos criar a rota put
+nessa rota vamos fazer a co,figuração padraõ como as outrase vou pegar o nome e email que é o que podemos atualizar, de dentero do body assim:
+const {name, email} = req.body
+agpra dentro do banc de dados vamos criar uma função
+ela vai ser muito parecida com a função delete então vamos copiar ela e modificar algumas coisas o nome vamos dar update vamos receber tambem o data alem dpo table e do id. e vamos tambem ter o rowindex igual o delete e no lugar do splice que remove os dados a gente vai dar uma substituição fazendo que é igual a data enviando o id, ou seja vamos substituir todos os dados. fica assim
+update(table, id, data) {
+        const rowIndex = this.#database[table].findIndex(row => row.id == id)
+        if (rowIndex >-1) {
+            this.#database[table][rowIndex]= {id, ...data}
+            this.#persist()
+        }
+    }
+
+    agora voltamos para o routes no metodo put colocamos o database.update e passamos no terceiro parametro um objeto com as informações que queremos enviar no caso o nome e o o email fica assim:
+      method: 'PUT',
+        path:buildRoutePath( '/users/:id'),
+        handler: (req, res) =>{
+            const id = req.params.id
+            const {name, email} = req.body
+            database.update('users',id, {name, email,})
+            return res.writeHead(204).end()
+        }
+    }
+
