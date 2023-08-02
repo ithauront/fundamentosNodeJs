@@ -1138,3 +1138,53 @@ update(table, id, data) {
         }
     }
 
+    # filtros
+    no caso de uma busca por exemplo como algo assim
+    http://localhost:3333/users?search=iuri
+    nos precisamos ser capazes de acessar o query seacrh e o valor da mesma forma que fomos de acessar o routeparams
+    temos que voltar ma no buildroutepath
+    nos vamos no nosso path regex e apos a verificação que ja estava setada nos vamos criar um novo grupo com (?<>) e como nome vamos dar query e ai vamos dizer que o qyery é opcional para dizer que é opcional nos temos que colocar ponto de interrogaçéao apos os parenteses assim(?<query>)?$ e botamos o cifrão para simbolizar que a url precisa terminar com esse query . o nosso query sempre começa com ? como podemos ver no exemplo que demos apos o users. então precisamos escapar o ponto de interrogação. para isso colocamos \\? apos isso o parenteses para pegar o conteudo que vem apos ponto de interrogação.e la dentro vamos colocar .* para simbolizar que pegamos tudo que vem apos o ? , o . significa qualquer caracter e o asterisco inumeras vezes.
+    fica assim:
+    const pathRegex = new RegExp(`^${pathWithParams}(?<query>\\?(.*))?$`)
+    agora se a gente mandar uma req get com o search iuri ele vai devolver no groups o querry search=iuri
+    agora vamos fazer outo arquivo no utils chamado extract-query-params.js
+    nele vamos criar essa função recebendo o query
+    export function extractQueryParams (query) {
+    
+}
+dentro dela vamos fazer um return e retirar o primeiro caracter .substr(1) porem temos que tratar os casos em que podemos ter mais de um parameto separados por & como por exemplo search=iuri&page=2
+para isso damos um split no & e transforma isso em um array com duas strings uma com cada parametro. e depois disso usamos o metodo reduce. começamos ele com o objeto vazio. para transformar o array el um objeto e vamos passar para o reduce os quertyparams e cada param que é as strings. dentro do reduce a gente vai dar um split no = para dividir o valor e o query e com isso vamos desestrutirar o array e colocar uma key e um value , assim pegamos a primeira posição antes do = por exemplo name e a segunda posição por exemplo iuri.
+ai para formar o objetdo damos um queryParams[key] = value fica assim:
+export function extractQueryParams (query) {
+    return query.substr(1).split('&').reduce((queryParam, param)=> {
+const [key, value] = param.split('=')
+queryParam[key] = value
+return queryParam
+    }, {})
+}
+
+se agora a gente na server dar um extractQueryParams(routeParams.groups.query) ele vai dar o search: iuri e todos os outros tipos de chamadas
+agora vamos mudarum pouco a logica do nosso if no server.
+ele esta atualmente assim:
+if (route) {
+    const routParams = req.url.match(route.path)
+   req.params = {...routParams.groups}
+    return route.handler(req, res)
+}
+
+nos vamos separar duas variaveis.
+query do routeParams.groups
+e todo o resto vamos botar em uma variabel chamada params fica assim
+const {query, ...params} = routParams.groups
+e vamos transformar o req.params nesses params que a gente especificou. fica assim
+req.params = params
+e a req.query vai ser o extractQueryParams(query)  sendo esse query o que nos tiramos de routesParams.groups.
+apenas para o metodo não retornar undefined caso não tenha nada vamos fazer uma terciaria dizendo que se o query estiver vazio ele retorna um objeto vazio. dessa forma
+req.query = query ? extractQueryParams(query) : {}
+se query existir ele var o extractqueyparams se não um objeto vazio.
+agora salvo voltamos para as rotas e no get coloco um console.log do req.query ele me da o resultado disso.
+
+
+
+
+

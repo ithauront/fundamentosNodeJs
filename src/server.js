@@ -1,6 +1,7 @@
 import http from 'node:http'
 import { json } from './middlewares/json.js'
 import { routes } from './middlewares/routes.js'
+import { extractQueryParams } from './utils/extract-query-params.js'
 
 
 
@@ -15,7 +16,10 @@ return route.method == method && route.path.test(url)
 
 if (route) {
     const routParams = req.url.match(route.path)
-   req.params = {...routParams.groups}
+
+    const {query, ...params} = routParams.groups
+   req.params = params
+   req.query = query ? extractQueryParams(query) : {}
     return route.handler(req, res)
 }
 
