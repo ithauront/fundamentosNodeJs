@@ -1184,6 +1184,83 @@ req.query = query ? extractQueryParams(query) : {}
 se query existir ele var o extractqueyparams se não um objeto vazio.
 agora salvo voltamos para as rotas e no get coloco um console.log do req.query ele me da o resultado disso.
 
+agora no metodo select vamos permitir um segundo parametro chamado search
+
+select(table, search) {
+const data = this.#database[table] ?? []
+
+return data
+}
+e dentro dele vamos vaer um if o search extiver preenchido. vamos fazer o data ser igual a data.filter() para filtrar ele como nos vamos alterar o valot de data é importante que a gente mude o const do data para uma let. no filter a gente vai definir row para percorrer todas as linhas.fica assim:
+select(table, search) {
+let data = this.#database[table] ?? []
+
+if (search) {
+    data = data.filter(row =>{
+        
+    })
+}
+
+return data
+}
+
+por enquanto inacabado. 
+voltamos para as rotas e n get a gente pega o search do req.query.
+e no parametro da busca em users a gente envia um objeto e nele vamos especificar o name: search
+email: search
+assim vamos pesquisar o query tanto no name quanto no email
+fica assim:
+  method: 'GET',
+        path:buildRoutePath( '/users'),
+        handler: (req, res) => {
+            const { search } = req.query
+            const users =  database.select('users', {
+                name: search,
+                email: search,
+            })
+    return res.end(JSON.stringify(users))
+        }
+
+        voltamos para o database.
+        dentro do filter vamos converter o objeto em um array convertendo ele assim:
+        return Object.entries(search)
+        para podermos usar metodos do array nele. vamos usar o metodo some. que é um metodo que percorre e se pelo menos uma das vezes que percorrido for true o item do array deve ser incluido no filtro.o object.entries cria um array com um array para cada entrie por exemplo vai ficar
+        [['name', iuri], ['email', 'iuri']]
+         agora no some podemos pegar a chave e valor que vai sr o name/email e o iuri
+         fica assim:
+         if (search) {
+    data = data.filter(row =>{
+        return Object.entries(search).some(([key, value]) => {
+            
+        })
+    })
+}
+ai de dentro do some vamos retornar se de cara row na key inclui o valor. ou seja se no nome e emailtem algum valor fica assim:
+if (search) {
+    data = data.filter(row =>{
+        return Object.entries(search).some(([key, value]) => {
+            return row[key].includes(value)
+        })
+    })
+}
+
+return data
+}
+
+e com isso a gente ja consegue ter uma resposta correta na busca.
+porem no nosso metodo nos estamos criando um objeto mandando name  email
+o que faz que se a gente não enviar o parametro não traz nada
+para mudar isso ao invez de mandar o name e email vamos mandar o esse objeto caso exista algo dentro de search assim se não enviamos um nulo assim:
+    const users =  database.select('users', seach ? {
+                name: search,
+                email: search,
+            }: null)
+
+            agora no database a gente pode fazer algo para ele considerar nõa considerar as maisuculas assim assim
+               return row[key].toLowercase().includes(value.toLowercase())
+               ai ele vai considerar o texto do query quanto o texto que estamos buscando todo em caixa baixa.
+
+    agora a aplicação esta terminadae funcionando.
 
 
 
