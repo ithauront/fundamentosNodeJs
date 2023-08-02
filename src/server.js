@@ -15,7 +15,7 @@ return route.method == method && route.path.test(url)
 
 if (route) {
     const routParams = req.url.match(route.path)
-    console.log(routParams)
+   req.params = {...routParams.groups}
     return route.handler(req, res)
 }
 

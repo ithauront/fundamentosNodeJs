@@ -1064,4 +1064,51 @@ porem lembra que quando a gente fez o primeiro regex ela buscava o nome do campo
 [ [ ':id', 'id', index: 7, input: '/users/:id', groups: undefined ] ] 
 aqui temos id como primeiro. se dentro das chaves da interrogação a gente colocar um $1 ele vai trazer esse nome do campo para o nosso identificador do parametro.
 usando isso se a gente der varios parametros de /id/groupId. ele vai acabar identificando todos pelo nome.
+[   
+  '/users/e71e75a9-4ecf-4fa3-845f-6dab6a5ae68b',
+  'e71e75a9-4ecf-4fa3-845f-6dab6a5ae68b',
+  index: 0,
+  input: '/users/e71e75a9-4ecf-4fa3-845f-6dab6a5ae68b',
+  groups: [Object: null prototype] {
+    id: 'e71e75a9-4ecf-4fa3-845f-6dab6a5ae68b'
+  }
+]
+podemos ver qaui que ele acha nos grupos um objeto e dentro dele tem o id.
+
+# remoção de usuario
+com isso vamos utilizar o group para poder eliminar o usuario.
+vamos fazer uma const para capturar o groupo
+vamos fazer isso criando um novo objeto e copiando tudo que tem dentro apenas porque ele da um object null prototype antes de mostrar o groups como pode ser visto acima. com isso ele vai parar de fazer isso.
+e vamos usar req.params, ou seja substituimos o const params por req.params. porque como o req esta sendo passado para frente e a gente tem acesso a le na rota delete. fica assim.
+if (route) {
+    const routParams = req.url.match(route.path)
+   req.params = {...routParams.groups}
+    return route.handler(req, res)
+}
+
+e agora la na rota delete a gente ja tem acesso ao req.params que é igual ao id.
+
+agora la no banco de dados database.js e depois de todos os metodos nos vamos criar o metodo chamado delete (table, id) ele ecebe a table e o id
+precisamos pesquisar se a informação existe no banco de dados então vamos dar um this. #database(table ) e porcurar nela pra achar um index onde o row id seja igual ao id que vamos receber. fica assim:
+ delete(table, id) {
+        const rowIndex = this.#database[table].findIndex(row => row.id == id)
+    }
+    a gente percore a tabela em questão e ve se tem algo no campo id que é igual ao id que informamos se isso existir ele vai retornar qual é o index dessa informação no array desse registro. caso ele não encontre ele vai retornar -1. com base nisso podemos fazer nossas if
+    se for maior do que menos 1 ou seja se existir o usuario com esse index, nos vamos nessa tabela dentro da database e vamos dar um splice ou seja remover do array a posição do index que é o rowIndex, e uma so posição, para ele não sair removendo varias a partir do row index. apos isso vamos persistir o banco de dados. fica assim:
+    delete(table, id) {
+        const rowIndex = this.#database[table].findIndex(row => row.id == id)
+        if (rowIndex >-1) {
+            this.#database[table].splice(rowIndex, 1)
+            this.#persist()
+        }
+    }
+
+    agora vamos na nossa rota e vamos pegar o id la do req.params e tambem vamos mandar o database deletar da tabela users esse id dentro do metodo delete. no return vamos colocar tambem um writeHead para que ele escreva o 204 como retorno. (204 ) significa sucesso porem sem nenhum conteudo. o metodo fica assim:
+     method: 'DELETE',
+        path:buildRoutePath( '/users/:id'),
+        handler: (req, res) =>{
+            const id = req.params.id
+            database.delete('users',id)
+            return res.writeHead(204).end()
+        }
 
